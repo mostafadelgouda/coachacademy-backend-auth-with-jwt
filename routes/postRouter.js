@@ -12,7 +12,7 @@ const router = express.Router();
 router.get("/", getAllPosts);
 router.get("/:id", getPostById);
 router.post("/", protect, createPost);
-router.delete("/", deletePostById);
-router.put("/", updatePostById);
+router.delete("/", protect, deletePostById);
+router.put("/", protect, updatePostById);
 
 export default router;

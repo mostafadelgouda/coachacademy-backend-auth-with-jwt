@@ -2,6 +2,7 @@
 import { User } from "../models/User.js";
 import { signToken, verifyToken } from "../config/jwt.js";
 import bcrypt from "bcrypt";
+import AppError from "../utils/appError.js";
 const getUserById = async (req, res) => {
   const { id } = req.params;
   res.status(200).json({ id: id });
@@ -13,19 +14,18 @@ const getAllUsers = async (req, res) => {
   res.status(200).json(users);
 };
 
-const createUser = async (req, res) => {
-  try {
-    const { name, email, age, role, password, dateOfBirth } = req.body;
-    //await Users.insertOne({ name, email, age });
-    const user = new User({ name, email, age, role, password, dateOfBirth });
-    await user.save();
-    const token = signToken(user._id);
-    res.status(200).json({ message: "User added successfully", token });
-  } catch (err) {
-    res
-      .status(400)
-      .json({ message: err.message || "User not added successfully" });
+const createUser = async (req, res, next) => {
+  const { name, email, age, role, password, dateOfBirth } = req.body;
+
+  //await Users.insertOne({ name, email, age });
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    throw new AppError("User with this email already exists", 401);
   }
+  const user = new User({ name, email, age, role, password, dateOfBirth });
+  await user.save();
+  const token = signToken(user._id);
+  res.status(200).json({ message: "User added successfully", token });
 };
 
 const login = async (req, res) => {
