@@ -3,6 +3,14 @@ import { User } from "../models/User.js";
 import { signToken, verifyToken } from "../config/jwt.js";
 import bcrypt from "bcrypt";
 import AppError from "../utils/appError.js";
+
+import nodemailer from "nodemailer";
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  port: 587,
+  auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+});
+
 const getUserById = async (req, res) => {
   const { id } = req.params;
   res.status(200).json({ id: id });
@@ -80,6 +88,21 @@ const updateUserById = async (req, res) => {
     res.status(400).json({ message: "User not updated successfully" });
   }
 };
+
+const sendEmail = async (req, res) => {
+  try {
+    console.log(req.body);
+    await transporter.sendMail({
+      to: req.body.email,
+      subject: "Welcome!",
+      html: `<h1>Hi ${req.body.name}</h1>`,
+    });
+    res.status(200).json({ message: "Email sent successfully" });
+  } catch (err) {
+    console.log(err.message);
+    res.status(400).json({ message: "Failed to send email" });
+  }
+};
 export {
   getUserById,
   createUser,
@@ -88,5 +111,6 @@ export {
   updateUserById,
   login,
   logout,
+  sendEmail,
 };
 // export default getUserById;

@@ -7,6 +7,7 @@ import {
   updateUserById,
   login,
   logout,
+  sendEmail,
 } from "../controllers/userController.js";
 // import { validateUser } from "../validators/userValidators.js";
 import { validate } from "../middleware/validate.js";
@@ -25,5 +26,7 @@ router.post("/login", login);
 router.post("/logout", logout);
 router.delete("/", deleteUserById);
 router.put("/", validate(updateUserSchema), updateUserById);
+
+router.post("/send-email", sendEmail);
 
 export default router;
