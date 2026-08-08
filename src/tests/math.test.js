@@ -1,6 +1,6 @@
 import { multiply } from "../functions/math.js";
 import request from "supertest";
-import app from "../index.js";
+import app from "../../api/index.js";
 test("multiplies two numbers", () => {
   expect(multiply(2, 3)).toBe(6);
 });
