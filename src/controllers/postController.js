@@ -1,5 +1,6 @@
 import { Post } from "../models/Post.js";
 import axios from "axios";
+import { redisClient } from "../config/redis.js";
 const createPost = async (req, res) => {
   try {
     const { text, imagesUrl } = req.body;
@@ -21,16 +22,28 @@ const getPostById = async (req, res) => {
 
 const getAllPosts = async (req, res) => {
   try {
-    console.log(
-      "Fetching all posts......................................................",
-    );
+    // const exists = await redisClient.exists("posts");
+    // if (exists) {
+    //   console.log("hello from asdfkl;jadsfjkl;kl;adsfj;kjladfs");
+    //   const cachedPosts = await redisClient.get("posts");
+    //   return res.status(200).json({ posts: JSON.parse(cachedPosts) });
+    // }
+
     const posts = await Post.find({}).populate("userId");
-    // const { data } = await axios.get("https://api.weather.com/now", {
-    //   //params: { city: "Cairo" },
-    //   //headers: { Authorization: `Bearer ${process.env.WEATHER_KEY}` },
-    //   timeout: 5000, // never hang forever
-    // });
-    res.status(200).json({ posts, weather: data });
+
+    // await redisClient.set("posts", JSON.stringify(posts));
+    // redisClient.set("name", "Mostafa");
+
+    // const name = redisClient.get("name");
+
+    // // Delete
+    // redisClient.del("name");
+
+    // // Check existence
+
+    // // Expiration: delete after 60 seconds
+
+    res.status(200).json({ posts });
   } catch (err) {
     res
       .status(400)
