@@ -1,11 +1,11 @@
 import express from "express"; //es6
 import morgan from "morgan"; //es6
-import userRouter from "../src/routes/userRouter.js";
+import userRouter from "./routes/userRouter.js";
 import dotenv from "dotenv";
 import { MongoClient } from "mongodb";
-import connectToDatabase from "../src/config/db.js";
-import postRouter from "../src/routes/postRouter.js";
-import { errorHandlingMiddleware } from "../src/middleware/errorHandling.js";
+import connectToDatabase from "./config/db.js";
+import postRouter from "./routes/postRouter.js";
+import { errorHandlingMiddleware } from "./middleware/errorHandling.js";
 import Stripe from "stripe";
 import http from "http";
 import { Server } from "socket.io";
