@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "start": "nodemon src/index.js",
-    "dev": "node src/server.js"
+    "start": "node src/index.js",
+    "dev": "node src/index.js"
   },
   "author": "",
   "license": "ISC",

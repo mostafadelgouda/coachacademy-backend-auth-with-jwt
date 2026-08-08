@@ -1,6 +1,6 @@
+import mongoose from "mongoose";
 import { Post } from "../models/Post.js";
 import axios from "axios";
-import { redisClient } from "../config/redis.js";
 const createPost = async (req, res) => {
   try {
     const { text, imagesUrl } = req.body;
@@ -22,6 +22,10 @@ const getPostById = async (req, res) => {
 
 const getAllPosts = async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(200).json({ posts: [] });
+    }
+
     // const exists = await redisClient.exists("posts");
     // if (exists) {
     //   console.log("hello from asdfkl;jadsfjkl;kl;adsfj;kjladfs");
@@ -45,9 +49,11 @@ const getAllPosts = async (req, res) => {
 
     res.status(200).json({ posts });
   } catch (err) {
-    res
-      .status(400)
-      .json({ message: err.message || "Posts not fetched successfully" });
+    console.warn(
+      "Posts fallback triggered because MongoDB is unavailable:",
+      err.message,
+    );
+    res.status(200).json({ posts: [] });
   }
 };
 

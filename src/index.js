@@ -1,40 +1,29 @@
-import express from "express"; //es6
-import morgan from "morgan"; //es6
-import userRouter from "./routes/userRouter.js";
+import express from "express";
+import morgan from "morgan";
 import dotenv from "dotenv";
-import { MongoClient } from "mongodb";
+import Stripe from "stripe";
 import connectToDatabase from "./config/db.js";
+import userRouter from "./routes/userRouter.js";
 import postRouter from "./routes/postRouter.js";
 import { errorHandlingMiddleware } from "./middleware/errorHandling.js";
-import Stripe from "stripe";
-import http from "http";
-import { Server } from "socket.io";
-// import { connectToRedis } from "./config/redis.js";
-const app = express();
 
-// Create normal HTTP server from Express
-const httpServer = http.createServer(app);
-
-// Attach Socket.IO to the HTTP server
-const io = new Server(httpServer, {
-  cors: {
-    origin: "*",
-  },
-});
-
-io.on("connection", (socket) => {
-  socket.on("message", (msg) => {
-    io.emit("message", msg); // broadcast to everyone
-  });
-});
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-connectToDatabase();
-// connectToRedis(); // Call the Redis connection function
 dotenv.config();
 
+const app = express();
+
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
+
+if (process.env.MONGO_URI && process.env.NODE_ENV !== "test") {
+  await connectToDatabase();
+}
+
 const createPaymentIntent = async ({ amount, currency }) => {
+  if (!stripe) {
+    throw new Error("Stripe is not configured");
+  }
+
   return await stripe.paymentIntents.create({
     amount,
     currency,
@@ -43,7 +32,12 @@ const createPaymentIntent = async ({ amount, currency }) => {
     },
   });
 };
+
 const createPaymentLink = async ({ amount, currency }) => {
+  if (!stripe) {
+    throw new Error("Stripe is not configured");
+  }
+
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     line_items: [
@@ -53,7 +47,7 @@ const createPaymentLink = async ({ amount, currency }) => {
           product_data: {
             name: "Payment",
           },
-          unit_amount: amount, // amount in smallest currency unit
+          unit_amount: amount,
         },
         quantity: 1,
       },
@@ -64,13 +58,16 @@ const createPaymentLink = async ({ amount, currency }) => {
 
   return session.url;
 };
+
 app.use(morgan("dev"));
 app.use(express.json());
 
+app.get("/health", (req, res) => {
+  res.status(200).json({ ok: true, timestamp: new Date().toISOString() });
+});
+
 app.post("/pay", async (req, res, next) => {
   try {
-    // Never trust the client in production.
-    // Calculate the amount from your database/products.
     const { amount, currency = "usd" } = req.body;
 
     const link = await createPaymentLink({ amount, currency });
@@ -85,8 +82,16 @@ app.post("/pay", async (req, res, next) => {
     });
   }
 });
+
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/posts", postRouter);
 app.use(errorHandlingMiddleware);
+
+if (process.env.NODE_ENV !== "test" && process.env.VERCEL !== "1") {
+  const port = process.env.PORT || 3000;
+  app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+  });
+}
+
 export default app;
-httpServer.listen(3000);
